@@ -93,6 +93,26 @@ class ElavonTest < Test::Unit::TestCase
     assert response.test?
   end
 
+  def test_successful_purchase_with_ip
+    response = stub_comms do
+      @gateway.purchase(@amount, @credit_card, @options.merge(ip: '0.0.0.0'))
+    end.check_request do |_endpoint, data, _headers|
+      assert_match(/ssl_cardholder_ip=0\.0\.0\.0/, data)
+    end.respond_with(successful_purchase_response)
+
+    assert_success response
+  end
+
+  def test_successful_authorization_with_ip
+    response = stub_comms do
+      @gateway.authorize(@amount, @credit_card, @options.merge(ip: '0.0.0.0'))
+    end.check_request do |_endpoint, data, _headers|
+      assert_match(/ssl_cardholder_ip=0\.0\.0\.0/, data)
+    end.respond_with(successful_authorization_response)
+
+    assert_success response
+  end
+
   def test_failed_capture
     @gateway.expects(:ssl_post).returns(failed_authorization_response)
     authorization = '123456INVALID;00000000-0000-0000-0000-00000000000'
